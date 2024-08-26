@@ -232,5 +232,3 @@ filename = (f'{model.__class__.__name__}'
 # Save the model
 model_path = os.path.join(model_dir, filename)
 torch.save(model.state_dict(), model_path)
-
-
