@@ -48,7 +48,8 @@ class MQA(nn.Module):
 
         # Create a mask tensor with shape [batch_size, num_heads, seq_len, seq_len]
         self.mask = torch.tril(torch.ones((config.max_position_embeddings, config.max_position_embeddings), 
-                                     dtype=torch.uint8)).view(1, 1, config.max_position_embeddings, config.max_position_embeddings).to(dtype=torch.bool)
+                                     dtype=torch.uint8)).view(1, 1, config.max_position_embeddings, config.max_position_embeddings).to(dtype=torch.bool).to(config.device)
+        # print(self.mask.device)
         #self.mask = mask.expand(-1, self.num_heads, -1, -1)
 
     def forward(self, hidden_states: torch.Tensor) -> torch.Tensor:
