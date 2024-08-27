@@ -1,13 +1,13 @@
-print('#' * 150)
-print('>>>>>>>>>>>>>>>> Step #1: import Libs ')
+
+print('>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Step #1: import Libs ')
 import sys
 sys.path.append('D:\conda\minGrok\Lib\site-packages')
 import dataclasses
 from model import *
 from tokenizer import SimpleTokenizer, loaded_stoi, loaded_merges
 
-print('#' * 150)
-print('>>>>>>>>>>>>>>>> Step #2: prepare tokenizer')
+
+print('>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Step #2: prepare tokenizer')
 
 tokenizer = SimpleTokenizer(loaded_stoi, loaded_merges)
 print("vocab length: ", tokenizer.vocab_len)
@@ -20,8 +20,8 @@ print("Encoded:", encoded_text)
 decoded_text = tokenizer.decode(encoded_text)
 print("Decoded:", decoded_text)
 
-print('#' * 150)
-print('>>>>>>>>>>>>>>>> Step #3: prepare config')
+
+print('>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Step #3: prepare config')
 
 @dataclasses.dataclass
 class Config:
@@ -29,25 +29,25 @@ class Config:
     vocab_size: int = tokenizer.vocab_len
 
     # The maximum sequence length that this model might ever be used with.
-    max_position_embeddings: int = 256 # in Grok it's 8,192
+    max_position_embeddings: int = 256 # 256 # in Grok it's 8,192
 
     # The number of layers in the model.
-    num_layers: int = 4 # In Grok it's 64
+    num_layers: int = 8 # In Grok it's 64
 
     # The number of attention heads used in the attention layers of the model.
-    num_attention_heads: int = 4 # In Grok it's 48
+    num_attention_heads: int = 8 # 4 # In Grok it's 48
 
     # The number of key-value heads for implementing attention.
     num_key_value_heads: int = 1 # In Grok it's 8
 
     # The hidden size of the model, AKA the embedding dimension. Each token embedding vector will be this long
-    hidden_size: int = 96 # In Grok it's 6,144
+    hidden_size: int = 128 # 96 # In Grok it's 6,144
 
     # How much wider should the inner dimension of the experts be than the model's embedding dimension?
     embedding_multiplier_scale: int = 2 # In Grok it's roughly 5.33
 
     # how many experts?
-    tot_num_experts: int = 4 # in Grok it's 8
+    tot_num_experts: int = 4 # 4 # in Grok it's 8
 
     # how many active experts per token?
     chosen_num_experts: int = 2 # in Grok it's also 2
@@ -80,8 +80,7 @@ class Config:
 config = Config()
 print(config)
 
-print('#' * 150)
-print('>>>>>>>>>>>>>>>> Step #4: prepare dataset')
+print('>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Step #4: prepare dataset')
 
 # load the dataset
 with open('input.txt', 'r', encoding='utf-8') as f:
@@ -99,8 +98,7 @@ train_data = data[:n]
 val_data = data[n:]
 
 
-print('#' * 150)
-print('>>>>>>>>>>>>>>>> Step #5: prepare batch/eval func ')
+print('>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Step #5: prepare batch/eval func ')
 # data loading for training which generates a small batch of data of inputs x and targets y
 def get_batch(split, batch_size):
     # whether we grab from our training or validation dataset
@@ -131,16 +129,15 @@ def estimate_loss(model, batch_size, eval_iters = 10): # to periodically estimat
     return out
 
 
-print('#' * 150)
-print('>>>>>>>>>>>>>>>> Step #6: init model and optim')
+print('>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Step #6: init model and optim')
 
 
 # instantiate a new model
 model = minGrok(config, tokenizer).to(config.device)
 
+
 # print the number of parameters in the model
 print(sum(p.numel() for p in model.parameters())/1e3, 'K parameters')
-
 
 # create a PyTorch optimizer
 # this is not what they used, but this learning rate & weight decay work for our tiny minGemma
@@ -149,17 +146,16 @@ weight_decay = 0.01
 optimizer = torch.optim.AdamW(model.parameters(), lr=learning_rate, weight_decay=weight_decay)
 
 
-print('#' * 150)
-print('>>>>>>>>>>>>>>>> Step #7: training model')
+print('>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Step #7: training model')
 
 # how long we want to train for
 max_iters = 10000
 
 # how often we want to check & see how our loss is doing
-eval_interval = 500
+eval_interval = 50
 
 # batch size to use
-batch_size = 128
+batch_size = 32 # 128
 
 import time as time
 
@@ -195,10 +191,7 @@ for iter in range(max_iters):
 # Disable anomaly detection after the training loop
 #torch.autograd.set_detect_anomaly(False)
 
-
-print('#' * 150)
-print('>>>>>>>>>>>>>>>> Step #8: save model')
-
+print('>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Step #8: save model')
 
 # save the model currently held in memory
 # the filename specifies the model's class, hyperparameters, and date/time it was saved
@@ -211,23 +204,23 @@ if not os.path.exists(model_dir):
 
 # Create a shorter, more concise filename
 filename = (f'{model.__class__.__name__}'
-           f'-v{config.vocab_size}'
-           f'-max_t{config.max_position_embeddings}'
-           f'-layers{config.num_layers}'
-           f'-heads{config.num_attention_heads}'
-           f'-kv_heads{config.num_key_value_heads}'
-           f'-hidden{config.hidden_size}'
-           f'-embedding_multiplier_scale{config.embedding_multiplier_scale}'
-           f'-head_dim{config.head_dim}'
-           f'-theta{config.rope_theta}'
-           f'-lr{learning_rate}'
-           f'-decay{weight_decay}'
+            f'-v{config.vocab_size}'
+            f'-max_t{config.max_position_embeddings}'
+            f'-layers{config.num_layers}'
+            f'-heads{config.num_attention_heads}'
+            f'-kv_heads{config.num_key_value_heads}'
+            f'-hidden{config.hidden_size}'
+            f'-embedding_multiplier_scale{config.embedding_multiplier_scale}'
+            f'-head_dim{config.head_dim}'
+            f'-theta{config.rope_theta}'
+            f'-lr{learning_rate}'
+            f'-decay{weight_decay}'
             f'-tot_num_experts{config.tot_num_experts}'
             f'-chosen_num_experts{config.chosen_num_experts}'
             f'-use_scale{config.use_scale}'
-           f'-batch{batch_size}'
+            f'-batch{batch_size}'
             f'-train_iter{max_iters}'
-           f'--{time.strftime("%Y-%m-%d_%H-%M-%S")}.pth')
+            f'--{time.strftime("%Y-%m-%d_%H-%M-%S")}.pth')
 
 # Save the model
 model_path = os.path.join(model_dir, filename)
